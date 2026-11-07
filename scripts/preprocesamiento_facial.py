@@ -92,7 +92,13 @@ def detectar_rostros(img: np.ndarray, detector, confianza_min: float = 0.90,
     Cada rostro es un diccionario con ``box`` = [x, y, ancho, alto], ``confidence`` y
     ``keypoints`` (left_eye, right_eye, nose, mouth_left, mouth_right).
     """
-    caras = detector.detect_faces(img)
+    try:
+        caras = detector.detect_faces(img)
+    except ValueError:
+        # MTCNN 1.0 falla con versiones recientes de TensorFlow cuando una etapa de la cascada
+        # (R-Net) descarta todas las regiones candidatas: O-Net recibe un lote vacío y la
+        # convolución lanza ValueError. En ese caso simplemente no hay rostros en esta escala.
+        return []
     salida = []
     for c in caras:
         x, y, w, h = [int(v) for v in c["box"]]
